@@ -1,0 +1,37 @@
+diff -up ./libraries/liblmdb/midl.c.fix ./libraries/liblmdb/midl.c
+--- ./libraries/liblmdb/midl.c.fix	2019-06-19 11:10:07.791337785 +0200
++++ ./libraries/liblmdb/midl.c	2019-06-19 11:16:04.005166705 +0200
+@@ -120,9 +120,15 @@ void mdb_midl_free(MDB_IDL ids)
+ void mdb_midl_shrink( MDB_IDL *idp )
+ {
+ 	MDB_IDL ids = *idp;
+-	if (*(--ids) > MDB_IDL_UM_MAX &&
+-		(ids = realloc(ids, (MDB_IDL_UM_MAX+2) * sizeof(MDB_ID))))
++  MDB_IDL res = NULL;
++	if (*(--ids) > MDB_IDL_UM_MAX)
+ 	{
++    res = realloc(ids, (MDB_IDL_UM_MAX+2) * sizeof(MDB_ID));
++    if (res)
++      ids = res;
++    else
++      return;
++
+ 		*ids++ = MDB_IDL_UM_MAX;
+ 		*idp = ids;
+ 	}
+@@ -131,10 +137,13 @@ void mdb_midl_shrink( MDB_IDL *idp )
+ static int mdb_midl_grow( MDB_IDL *idp, int num )
+ {
+ 	MDB_IDL idn = *idp-1;
++  MDB_IDL res = NULL;
+ 	/* grow it */
+-	idn = realloc(idn, (*idn + num + 2) * sizeof(MDB_ID));
+-	if (!idn)
++	res = realloc(idn, (*idn + num + 2) * sizeof(MDB_ID));
++	if (!res)
+ 		return ENOMEM;
++  else
++    idn = res;
+ 	*idn++ += num;
+ 	*idp = idn;
+ 	return 0;
